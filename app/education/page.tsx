@@ -4,7 +4,6 @@ import { GraduationCap } from "lucide-react";
 import { DecryptText } from "@/components/decrypt-text";
 import { EducationCard } from "@/components/education-card";
 import { motion } from "framer-motion";
-import Link from "next/link";
 
 const education = [
   {
@@ -102,7 +101,7 @@ export default function Education() {
               Projets par catégorie
             </h2>
             <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Découvrez mes projets classés par domaine d'expertise
+              Découvrez mes projets classés par domaine d&apos;expertise
             </p>
           </div>
           

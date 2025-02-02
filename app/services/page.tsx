@@ -1,8 +1,8 @@
 "use client";
 
 import { DecryptText } from "@/components/decrypt-text";
-import { Code2, Server, Network, Shield, Cpu, Workflow } from "lucide-react";
-import Link from "next/link";
+import { Code2, Server, Cpu} from "lucide-react";
+// import { Code2, Server, Network, Shield, Cpu, Workflow } from "lucide-react";
 
 const services = [
   {

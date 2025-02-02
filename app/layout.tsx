@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { CustomCursor } from "@/components/custom-cursor";
 import { NavMenu } from "@/components/nav-menu";
 
