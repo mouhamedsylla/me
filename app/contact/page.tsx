@@ -2,8 +2,94 @@
 
 import { DecryptText } from "@/components/decrypt-text";
 import { Mail, Phone, MapPin, Clock, Github, Linkedin } from "lucide-react";
+import { useState } from "react";
+import { z } from "zod";
+import { toast } from "sonner";
+
+const contactSchema = z.object({
+  from: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
+  email: z.string().email({ message: "Email invalide" }),
+  subject: z.string().optional(),
+  message: z.string().min(10, { message: "Le message doit contenir au moins 10 caractères" })
+});
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    from: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFieldErrors({});
+
+    try {
+      const validatedData = contactSchema.parse(formData);
+      const response = await fetch("https://api.tuxdev.me/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: formData.from,
+          email: formData.email,
+          message: formData.message,
+          subject: formData.subject
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.log(body);
+        throw new Error(body);
+      }
+
+      toast.success("Message envoyé avec succès!");
+      setFormData({
+        from: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+    } catch (err) {
+      const errors: Record<string, string> = {};
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else if (typeof err === 'object' && err !== null && 'errors' in err) {
+        (err as {errors: Array<{path: string[], message: string}>}).errors.forEach((error) => {
+          errors[error.path[0]] = error.message;
+        });
+        setFieldErrors(errors);
+      } else {
+        toast.error('An unknown error occurred');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-background py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -88,16 +174,21 @@ export default function Contact() {
             <h2 className="mb-6 text-2xl font-semibold">
               <DecryptText text="Send a Message" delay={400} />
             </h2>
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-medium">
+                <label htmlFor="from" className="mb-2 block text-sm font-medium">
                   Name
                 </label>
                 <input
                   type="text"
-                  id="name"
+                  id="from"
+                  name="from"
+                  value={formData.from}
+                  onChange={handleChange}
                   className="w-full rounded-md border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
                 />
+                {fieldErrors.from && <p className="mt-1 text-sm text-red-500">{fieldErrors.from}</p>}
               </div>
               <div>
                 <label htmlFor="email" className="mb-2 block text-sm font-medium">
@@ -106,6 +197,24 @@ export default function Contact() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+                {fieldErrors.email && <p className="mt-1 text-sm text-red-500">{fieldErrors.email}</p>}
+              </div>
+              <div>
+                <label htmlFor="subject" className="mb-2 block text-sm font-medium">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
                   className="w-full rounded-md border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -115,15 +224,21 @@ export default function Contact() {
                 </label>
                 <textarea
                   id="message"
+                  name="message"
                   rows={6}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={formData.message}
+                  onChange={handleChange}
+                  className="w-full resize-none rounded-md border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
                 ></textarea>
+                {fieldErrors.message && <p className="mt-1 text-sm text-red-500">{fieldErrors.message}</p>}
               </div>
               <button
                 type="submit"
-                className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90"
+                disabled={isSubmitting}
+                className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                Send Message
+                {isSubmitting ? 'Envoi en cours...' : 'Send Message'}
               </button>
             </form>
           </div>
